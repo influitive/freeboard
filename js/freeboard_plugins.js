@@ -3026,6 +3026,141 @@ var freeboard = (function()
 
 $.extend(freeboard, jQuery.eventEmitter);
 
+(function () {
+	var cloud66Datasource = function (settings, updateCallback) {
+		var self = this;
+		var updateTimer = null;
+		var currentSettings = settings;
+		// Update every 15 seconds
+		var refreshFrequency = 15 * 1000;
+
+		function updateRefresh(refreshTime) {
+			if (updateTimer) {
+				clearInterval(updateTimer);
+			}
+
+			updateTimer = setInterval(function () {
+				self.updateNow();
+			}, refreshTime);
+		}
+
+		updateRefresh(refreshFrequency);
+
+		this.updateNow = function () {
+
+			var url = 'https://app.cloud66.com/api/3/stacks.json';
+
+			self.combinePages(url, []).then(updateCallback);
+		}
+
+		this.combinePages = function (url, acc) {
+			if (!url)
+				return acc;
+			return $.ajax({
+				url: url,
+				dataType: 'JSON',
+				type: 'GET',
+				headers: {
+					'Authorization': currentSettings.personal_token
+				}
+			}).then(function(data) {
+				return self.combinePages(data.pagination.next,
+					acc.concat(data.response));
+			});
+		}
+
+		this.onDispose = function () {
+			clearInterval(updateTimer);
+			updateTimer = null;
+		}
+
+		this.onSettingsChanged = function (newSettings) {
+			currentSettings = newSettings;
+			updateRefresh(refreshFrequency);
+			self.updateNow();
+		}
+	};
+console.log("YOOOOOO");
+	freeboard.loadDatasourcePlugin({
+		type_name: 'Cloud66',
+		settings: [
+			{
+				name: 'personal_token',
+				display_name: 'Personal Token',
+				type: "text"
+			}
+		],
+		newInstance: function (settings, newInstanceCallback, updateCallback) {
+			newInstanceCallback(new cloud66Datasource(settings, updateCallback));
+		}
+	});
+
+}());
+
+(function () {
+	freeboard.addStyle('.tw-sparkline',
+		'height:20px;');
+
+    var cloud66Widget = function (settings) {
+
+        var self = this;
+
+        var currentSettings = settings;
+		var displayElement = $('<div class="tw-display"></div>');
+
+        this.render = function (element) {
+			$(element).empty();
+
+			$(displayElement)
+				.append($('<div class="tw-tr"></div>').append(titleElement));
+
+            $(element).append(displayElement);
+        }
+
+        this.onSettingsChanged = function (newSettings) {
+
+        }
+
+        this.onCalculatedValueChanged = function (settingName, newValue) {
+            if (settingName == "stacks") {
+                console.log("New stacks:", newValue);
+            }
+        }
+
+        this.onDispose = function () {
+
+        }
+
+        this.onSettingsChanged(settings);
+    };
+
+    freeboard.loadWidgetPlugin({
+        type_name: "cloud66_widget",
+        display_name: "Cloud66 Widget",
+        settings: [
+            {
+                name: "title",
+                display_name: "Title",
+                type: "text"
+            },
+			{
+				name: 'environment',
+				display_name: 'Environment',
+				type: 'text'
+			},
+            {
+                name: "stacks",
+                display_name: "Stacks",
+                type: "calculated"
+            }
+        ],
+        newInstance: function (settings, newInstanceCallback) {
+            newInstanceCallback(new cloud66Widget(settings));
+        }
+    });
+
+}());
+
 // ┌────────────────────────────────────────────────────────────────────┐ \\
 // │ F R E E B O A R D                                                  │ \\
 // ├────────────────────────────────────────────────────────────────────┤ \\
@@ -3596,7 +3731,7 @@ freeboard.loadDatasourcePlugin({
                 // **required** : Set to true if this setting is required for the datasource to be created.
                 "required" : true
 			}
-			
+
 		],
 		// **newInstance(settings, newInstanceCallback, updateCallback)** (required) : A function that will be called when a new instance of this plugin is requested.
 		// * **settings** : A javascript object with the initial settings set by the user. The names of the properties in the object will correspond to the setting names defined above.
@@ -3609,7 +3744,7 @@ freeboard.loadDatasourcePlugin({
 		}
 	});
 
-
+console.log("BUDDDY");
 	// ### Datasource Implementation
 	//
 	// -------------------
@@ -3622,11 +3757,11 @@ freeboard.loadDatasourcePlugin({
 		// Good idea to create a variable to hold on to our settings, because they might change in the future. See below.
 		var currentSettings = settings;
 
-		
+
 
 		/* This is some function where I'll get my data from somewhere */
 
- 	
+
 		function getData()
 		{
 
@@ -3634,11 +3769,11 @@ freeboard.loadDatasourcePlugin({
 		 var conn = skynet.createConnection({
     		"uuid": currentSettings.uuid,
     		"token": currentSettings.token,
-    		"server": currentSettings.server, 
+    		"server": currentSettings.server,
     		"port": currentSettings.port
-  				});	
-			 
-			 conn.on('ready', function(data){	
+  				});
+
+			 conn.on('ready', function(data){
 
 			 	conn.on('message', function(message){
 
@@ -3650,7 +3785,7 @@ freeboard.loadDatasourcePlugin({
 			 });
 			}
 
-	
+
 
 		// **onSettingsChanged(newSettings)** (required) : A public function we must implement that will be called when a user makes a change to the settings.
 		self.onSettingsChanged = function(newSettings)
@@ -3669,7 +3804,7 @@ freeboard.loadDatasourcePlugin({
 		// **onDispose()** (required) : A public function we must implement that will be called when this instance of this plugin is no longer needed. Do anything you need to cleanup after yourself here.
 		self.onDispose = function()
 		{
-		
+
 			//conn.close();
 		}
 

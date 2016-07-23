@@ -43,7 +43,8 @@ module.exports = function(grunt) {
 			},
             plugins : {
                 src : [
-                    'plugins/freeboard/*.js'
+                    'plugins/freeboard/*.js',
+                    'plugins/influitive/*.js'
                 ],
                 dest : 'js/freeboard.plugins.js'
             },
