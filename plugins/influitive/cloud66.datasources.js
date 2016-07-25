@@ -20,17 +20,17 @@
 
 		this.updateNow = function () {
 
-			var url = '/public/sample.json';//'https://app.cloud66.com/api/3/stacks.json';
-
+			var url = 'https://app.cloud66.com/api/3/stacks.json';
+			// Use proxy server to handle missing cors support.
 			self.combinePages(url, []).then(updateCallback);
 		}
 
 		this.combinePages = function (url, acc) {
 			if (!url)
 				return acc;
+			var requestURL = (location.protocol == "https:" ? "https:" : "http:") + "//thingproxy.freeboard.io/fetch/" + encodeURI(url);
 			return $.ajax({
-				url: url,
-				dataType: 'JSON',
+				url: requestURL,
 				type: 'GET',
 				headers: {
 					'Authorization': currentSettings.personal_token
