@@ -22,6 +22,7 @@
                 "lib/js/thirdparty/jquery.caret.js",
 				"lib/js/thirdparty/codemirror.js",
 				"lib/js/thirdparty/jquery.xdomainrequest.js",
+                "lib/js/thirdparty/firebase.js",
 
                 "lib/js/freeboard/FreeboardModel.js",
                 "lib/js/freeboard/DatasourceModel.js",
@@ -106,6 +107,13 @@
                     </table>
                 </div>
                 <span class="text-button table-operation" data-bind="pluginEditor: {operation: 'add', type: 'datasource'}">ADD</span>
+            </div>
+            <div class='text-button' data-bind="click: login, visible: currentUser()==null">
+                Login
+            </div>
+            <div class='title' data-bind="click: logout, visible: currentUser">
+                <span data-bind='text: currentUser()!==null && currentUser().displayName'></span>
+                <span class="text-button" data-bind="click: logout">Logout?</span>
             </div>
         </div>
     </div>
