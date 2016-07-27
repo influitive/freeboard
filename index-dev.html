@@ -72,9 +72,14 @@
                             <label data-bind="click: saveDashboardClicked">Save Freeboard</label>
                             <label style="display: none;" data-bind="click: saveDashboard" data-pretty="true">[Pretty]</label>
                             <label style="display: none;" data-bind="click: saveDashboard" data-pretty="false">[Minified]</label>
+                            <label style="display: none;" data-bind="click: saveDashboard" data-pretty="true" data-server="true">[Server]</label>
                         </li>
                         <li id="add-pane" data-bind="click: createPane"><i class="icon-plus icon-white"></i><label>Add Pane</label></li>
                     </ul>
+                </div>
+                <div id="board-name">
+                    <label>Board Name:</label>
+                    <input class="form-value" data-bind="value: name" />
                 </div>
             </div>
             <div id="datasources">
@@ -117,6 +122,10 @@
             </div>
         </div>
     </div>
+    <div data-bind="foreach: {data: sharedServerBoards, as: 'board'}">
+        <div class='text-button' data-bind="text: board.name, click: $parent.loadDashboard">
+        </div>
+    </div>
 	<div id="column-tools" class="responsive-column-width">
 		<ul class="board-toolbar left-columns">
 			<li class="column-tool add" data-bind="click: addGridColumnLeft"><span class="column-icon right"></span><i class="icon-arrow-left icon-white"></i></li>
@@ -131,6 +140,8 @@
         <i id="toggle-header-icon" class="icon-wrench icon-white"></i>
 	</div>
 </header>
+
+
 
 <div style="display:hidden">
     <ul data-bind="template: { name: 'pane-template', foreach: panes}">

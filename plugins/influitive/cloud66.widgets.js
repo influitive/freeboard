@@ -52,7 +52,6 @@
             if (settingName == "stacks") {
                 $(newValue.filter(self.filterStacks)).each(function (index, stack) {
                     var id = stack.uid;
-                    console.log("STACK:", stack)
                     var rowElement = $('<div class="tw-tr" id="'+id+'"></div>')
                         .append($('<div class="tw-td"></div>')
                             .append(stack.name))
@@ -62,14 +61,14 @@
                             .append(self.buildHealthElement(stack)))
                         .append($('<div class="tw-td"></div>')
                             .append(stack.git_branch))
+                        .append($('<div class="tw-td"></div>')
+                            .append(new Date(stack.updated_at).toLocaleString()))
 
                     var existingEl = $(displayElement).find('#'+id);
                     if (existingEl.length > 0)
                         existingEl.replaceWith(rowElement);
-                    else {
+                    else
                         $(displayElement).append(rowElement);
-                    console.log('Appending rowElement')
-                }
                 });
 
             }
