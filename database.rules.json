@@ -1,6 +1,8 @@
 {
   "rules": {
-    ".read": "auth != null",
-    ".write": "auth != null"
+    "shared-boards": {
+      ".read": "auth != null && auth.token.email_verified == true && auth.token.email.matches(/.*@influitive.com$/)",
+      ".write": "auth != null && auth.token.email_verified == true && auth.token.email.matches(/.*@influitive.com$/)"
+    }
   }
 }
