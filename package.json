@@ -13,6 +13,7 @@
   },
   "scripts": {
     "start": "http-server . -d",
-    "deploy": "firebase deploy"
+    "deploy": "firebase deploy",
+    "build": "grunt"
   }
 }

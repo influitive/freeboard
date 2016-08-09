@@ -1722,17 +1722,17 @@ freeboard.loadDatasourcePlugin({
 
 		this.updateNow = function () {
 
-			var url = '/public/sample.json';//'https://app.cloud66.com/api/3/stacks.json';
-
+			var url = 'https://app.cloud66.com/api/3/stacks.json';
+			// Use proxy server to handle missing cors support.
 			self.combinePages(url, []).then(updateCallback);
 		}
 
 		this.combinePages = function (url, acc) {
 			if (!url)
 				return acc;
+			var requestURL = (location.protocol == "https:" ? "https:" : "http:") + "//thingproxy.freeboard.io/fetch/" + encodeURI(url);
 			return $.ajax({
-				url: url,
-				dataType: 'JSON',
+				url: requestURL,
 				type: 'GET',
 				headers: {
 					'Authorization': currentSettings.personal_token
@@ -1791,43 +1791,60 @@ freeboard.loadDatasourcePlugin({
         4: 'Failed'
     };
 
+    freeboard.addStyle('.tw-th',
+		'display:table-row; font-size: 1rem; color: #B88F51;');
 
     var cloud66Widget = function (settings) {
 
         var self = this;
 
         var currentSettings = settings;
-		var displayElement = $('<div class="tw-display"></div>');
-		var titleElement = $('<h2 class="section-title tw-title tw-td"></h2>');
-
-        this.title = 'Boops';
+		var displayElement = $('<div class="tw-display"></div>')
+            .append($('<div class="tw-th"></div>')
+                .append('<div class="tw-td">Name</div>')
+                .append('<div class="tw-td">Status</div>')
+                .append('<div class="tw-td">Health</div>')
+                .append('<div class="tw-td">Git Branch</div>')
+                .append('<div class="tw-td">Updated At</div>')
+            );
+        var projects = [];
 
         this.render = function (element) {
 			$(element).empty();
-
-			$(displayElement)
-				.append($('<div class="tw-tr"></div>').append(titleElement));
 
             $(element).append(displayElement);
         }
 
         this.onSettingsChanged = function (newSettings) {
-            titleElement.append(newSettings.title);
+            projects = newSettings.projects ? newSettings.projects.split(',').map(function(p){
+                return p.toUpperCase();
+            }) : [];
+        }
+
+        this.getHeight = function() {
+            return 5;
+        }
+
+        this.filterStacks = function(stack) {
+            return stack.environment === currentSettings.environment && projects.indexOf(stack.name.toUpperCase()) > -1;
         }
 
         this.onCalculatedValueChanged = function (settingName, newValue) {
             if (settingName == "stacks") {
-                console.log("New stacks:", newValue);
-                $(newValue).each(function (index, stack) {
-                    console.log('hey', stack)
-                    var id = stack.id;
+                $(newValue.filter(self.filterStacks)).each(function (index, stack) {
+                    var id = stack.uid;
+
                     var rowElement = $('<div class="tw-tr" id="'+id+'"></div>')
                         .append($('<div class="tw-td"></div>')
-                            .append(stack.name))
+                            .append(self.buildNameElement(stack)))
                         .append($('<div class="tw-td"></div>')
                             .append(self.buildStatusElement(stack)))
                         .append($('<div class="tw-td"></div>')
                             .append(self.buildHealthElement(stack)))
+                        .append($('<div class="tw-td"></div>')
+                            .append(self.buildGitBranch(stack)))
+                        .append($('<div class="tw-td"></div>')
+                            .append(new Date(stack.updated_at).toLocaleString()))
 
                     var existingEl = $(displayElement).find('#'+id);
                     if (existingEl.length > 0)
@@ -1839,12 +1856,20 @@ freeboard.loadDatasourcePlugin({
             }
         }
 
+        this.buildNameElement = function (stack) {
+            return stack.name;
+        }
+
         this.buildStatusElement = function (stack) {
             return STATUS_CODES[stack.status];
         }
 
         this.buildHealthElement = function (stack) {
             return HEALTH_CODES[stack.health];
+        }
+
+        this.buildGitBranch = function (stack) {
+            return stack.git_branch;
         }
 
         this.onDispose = function () {
@@ -1858,11 +1883,6 @@ freeboard.loadDatasourcePlugin({
         type_name: "cloud66_widget",
         display_name: "Cloud66 Widget",
         settings: [
-            {
-                name: "title",
-                display_name: "Title",
-                type: "text"
-            },
 			{
 				name: 'environment',
 				display_name: 'Environment',
@@ -1872,6 +1892,12 @@ freeboard.loadDatasourcePlugin({
                 name: "stacks",
                 display_name: "Stacks",
                 type: "calculated"
+            },
+            {
+                name: "projects",
+                display_name: "Projects",
+                type: "text",
+                description: "Comma-separated for multiple projects"
             }
         ],
         newInstance: function (settings, newInstanceCallback) {

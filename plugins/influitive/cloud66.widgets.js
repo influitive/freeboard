@@ -18,14 +18,22 @@
         4: 'Failed'
     };
 
-    // freeboard.addStyle('.tw-scrollable', 'overflow: auto;');
+    freeboard.addStyle('.tw-th',
+		'display:table-row; font-size: 1rem; color: #B88F51;');
 
     var cloud66Widget = function (settings) {
 
         var self = this;
 
         var currentSettings = settings;
-		var displayElement = $('<div class="tw-display"></div>');
+		var displayElement = $('<div class="tw-display"></div>')
+            .append($('<div class="tw-th"></div>')
+                .append('<div class="tw-td">Name</div>')
+                .append('<div class="tw-td">Status</div>')
+                .append('<div class="tw-td">Health</div>')
+                .append('<div class="tw-td">Git Branch</div>')
+                .append('<div class="tw-td">Updated At</div>')
+            );
         var projects = [];
 
         this.render = function (element) {
@@ -52,15 +60,16 @@
             if (settingName == "stacks") {
                 $(newValue.filter(self.filterStacks)).each(function (index, stack) {
                     var id = stack.uid;
+
                     var rowElement = $('<div class="tw-tr" id="'+id+'"></div>')
                         .append($('<div class="tw-td"></div>')
-                            .append(stack.name))
+                            .append(self.buildNameElement(stack)))
                         .append($('<div class="tw-td"></div>')
                             .append(self.buildStatusElement(stack)))
                         .append($('<div class="tw-td"></div>')
                             .append(self.buildHealthElement(stack)))
                         .append($('<div class="tw-td"></div>')
-                            .append(stack.git_branch))
+                            .append(self.buildGitBranch(stack)))
                         .append($('<div class="tw-td"></div>')
                             .append(new Date(stack.updated_at).toLocaleString()))
 
@@ -74,12 +83,20 @@
             }
         }
 
+        this.buildNameElement = function (stack) {
+            return stack.name;
+        }
+
         this.buildStatusElement = function (stack) {
             return STATUS_CODES[stack.status];
         }
 
         this.buildHealthElement = function (stack) {
             return HEALTH_CODES[stack.health];
+        }
+
+        this.buildGitBranch = function (stack) {
+            return stack.git_branch;
         }
 
         this.onDispose = function () {

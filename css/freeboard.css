@@ -2101,6 +2101,11 @@ td.form-table-value > input[type="checkbox"] {
 	cursor: pointer;
 }
 
+#login {
+	float: right;
+}
+
+#board-name,
 ul.board-toolbar {
 	padding: 0px;
 	margin: 0px;
@@ -2122,10 +2127,20 @@ ul.board-toolbar.vertical {
 	height: 14px;
 }
 
+#board-name {
+	color: #B88F51;
+	cursor: auto;
+	margin: 0px 0px 0px 5px;
+	background-color: rgba(75, 75, 75, 0.0);
+	padding: 8px;
+	height: 14px;
+}
+
 .board-toolbar.vertical li {
 	float: none;
 }
 
+#board-name:hover,
 .board-toolbar li:hover {
 	background-color: rgba(75, 75, 75, 1.0);
 

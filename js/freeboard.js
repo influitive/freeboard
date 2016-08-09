@@ -73,7 +73,7 @@ DatasourceModel = function(theFreeboardModel, datasourcePlugins) {
 	this.serialize = function()
 	{
 		return {
-			name    : self.name(),
+			name    : self.name() || null,
 			type    : self.type(),
 			settings: self.settings()
 		};
@@ -284,6 +284,9 @@ function FreeboardModel(datasourcePlugins, widgetPlugins, freeboardUI)
 	this.datasources = ko.observableArray();
 	this.panes = ko.observableArray();
 	this.datasourceData = {};
+	this.name = ko.observable(null);
+	this.sharedServerBoards = ko.observableArray();
+
 	this.processDatasourceUpdate = function(datasourceModel, newData)
 	{
 		var datasourceName = datasourceModel.name();
@@ -381,7 +384,8 @@ function FreeboardModel(datasourcePlugins, widgetPlugins, freeboardUI)
 
 		return {
 			version     : SERIALIZATION_VERSION,
-			header_image: self.header_image(),
+			name				: self.name(),
+			header_image: self.header_image() || null,
 			allow_edit  : self.allow_edit(),
 			plugins     : self.plugins(),
 			panes       : panes,
@@ -408,6 +412,7 @@ function FreeboardModel(datasourcePlugins, widgetPlugins, freeboardUI)
 			}
 			self.version = object.version || 0;
 			self.header_image(object.header_image);
+			self.name(object.name)
 
 			_.each(object.datasources, function(datasourceConfig)
 			{
@@ -477,6 +482,7 @@ function FreeboardModel(datasourcePlugins, widgetPlugins, freeboardUI)
 		self.plugins.removeAll();
 		self.datasources.removeAll();
 		self.panes.removeAll();
+		self.name(null);
 	}
 
 	this.loadDashboard = function(dashboardData, callback)
@@ -548,6 +554,7 @@ function FreeboardModel(datasourcePlugins, widgetPlugins, freeboardUI)
 	this.saveDashboard = function(_thisref, event)
 	{
 		var pretty = $(event.currentTarget).data('pretty');
+		var server = $(event.currentTarget).data('server');
 		var contentType = 'application/octet-stream';
 		var a = document.createElement('a');
 		if(pretty){
@@ -555,11 +562,16 @@ function FreeboardModel(datasourcePlugins, widgetPlugins, freeboardUI)
 		}else{
 			var blob = new Blob([JSON.stringify(self.serialize())], {'type': contentType});
 		}
-		document.body.appendChild(a);
-		a.href = window.URL.createObjectURL(blob);
-		a.download = "dashboard.json";
-		a.target="_self";
-		a.click();
+		if (!server) {
+			document.body.appendChild(a);
+			a.href = window.URL.createObjectURL(blob);
+			a.download = "dashboard.json";
+			a.target="_self";
+			a.click();
+		}
+		else {
+			firebase.database().ref('shared-boards/' + this.name()).set(self.serialize());
+		}
 	}
 
 	this.addDatasource = function(datasource)
@@ -668,8 +680,70 @@ function FreeboardModel(datasourcePlugins, widgetPlugins, freeboardUI)
 		var editing = !self.isEditing();
 		self.setEditing(editing);
 	}
+
+	this.currentUser = ko.observable(null);
+	this.currentUser.subscribe(function(newValue){
+		if (newValue !== null){
+			self.initializeFirebaseBoards();
+		} else {
+			self.sharedServerBoards.removeAll();
+			self.clearDashboard();
+		}
+	});
+	setTimeout(function(){self.currentUser(firebase.User);}, 100);
+
+	this.login = function()
+	{
+		var provider = new firebase.auth.GoogleAuthProvider();
+		firebase.auth().signInWithPopup(provider).then(function(result) {
+			// This gives you a Google Access Token. You can use it to access the Google API.
+			var token = result.credential.accessToken;
+			// The signed-in user info.
+			var user = result.user;
+			self.currentUser(user);
+
+		}).catch(function(error) {
+			// Handle Errors here.
+			var errorCode = error.code;
+			var errorMessage = error.message;
+			// The email of the user's account used.
+			var email = error.email;
+			// The firebase.auth.AuthCredential type that was used.
+			var credential = error.credential;
+		});
+	}
+
+	this.logout = function() {
+		firebase.auth().signOut().then(function() {
+			self.currentUser(null);
+			firebase.database().ref('shared-boards').off();
+		});
+	}
+
+	this.initializeFirebaseBoards = function() {
+		var sharedBoardsRef = firebase.database().ref('shared-boards');
+		sharedBoardsRef.on('child_added', function(data) {
+			var obj = data.val();
+			obj._key = data.key;
+			self.sharedServerBoards.push(obj);
+		});
+		sharedBoardsRef.on('child_changed', function(data) {
+			self.sharedServerBoards.remove(function (item) {
+				return item._key == data.key;
+			});
+			var obj = data.val();
+			obj._key = data.key;
+			self.sharedServerBoards.push(obj);
+		});
+		sharedBoardsRef.on('child_removed', function(data) {
+			self.sharedServerBoards.remove(function (item) {
+				return item._key == data.key;
+			});
+		});
+	}
 }
 
+// TODO: Save boards with a name.
 function FreeboardUI()
 {
 	var PANE_MARGIN = 10;
@@ -2374,7 +2448,7 @@ function WidgetModel(theFreeboardModel, widgetPlugins) {
 
 	this.serialize = function () {
 		return {
-			title: self.title(),
+			title: self.title() || null,
 			type: self.type(),
 			settings: self.settings()
 		};
@@ -2843,6 +2917,13 @@ var freeboard = (function()
 	return {
 		initialize          : function(allowEdit, finishedCallback)
 		{
+			var config = {
+				apiKey: "AIzaSyDlzgiQu8--8DK0iQ7clcNOmWS17bQfvgE",
+				authDomain: "freeboard-fe8dc.firebaseapp.com",
+				databaseURL: "https://freeboard-fe8dc.firebaseio.com",
+				storageBucket: "freeboard-fe8dc.appspot.com",
+			};
+			firebase.initializeApp(config);
 			ko.applyBindings(theFreeboardModel);
 
 			// Check to see if we have a query param called load. If so, we should load that dashboard initially
