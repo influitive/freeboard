@@ -2736,3 +2736,6 @@ input:-moz-placeholder, textarea:-moz-placeholder {
 	height: 100% !important;
 }
 
+.server-board {
+	display: inline;
+}

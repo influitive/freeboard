@@ -5,6 +5,7 @@
 		var currentSettings = settings;
 		// Update every 15 seconds
 		var refreshFrequency = 15 * 1000;
+		var apiUrl = 'https://app.cloud66.com/api/3/stacks.json';
 
 		function updateRefresh(refreshTime) {
 			if (updateTimer) {
@@ -20,15 +21,17 @@
 
 		this.updateNow = function () {
 
-			var url = 'https://app.cloud66.com/api/3/stacks.json';
+
 			// Use proxy server to handle missing cors support.
-			self.combinePages(url, []).then(updateCallback);
+			self.combinePages(1, []).then(updateCallback);
 		}
 
-		this.combinePages = function (url, acc) {
-			if (!url)
+		this.combinePages = function (page, acc, params) {
+			if (!page)
 				return acc;
-			var requestURL = (location.protocol == "https:" ? "https:" : "http:") + "//thingproxy.freeboard.io/fetch/" + encodeURI(url);
+			var url = apiUrl + '?page=' + page;
+			// CORS support provided by https://jsonp.afeld.me/
+			var requestURL = "https://jsonp.afeld.me/?url=" + encodeURI(url);
 			return $.ajax({
 				url: requestURL,
 				type: 'GET',

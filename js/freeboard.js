@@ -488,6 +488,7 @@ function FreeboardModel(datasourcePlugins, widgetPlugins, freeboardUI)
 	this.loadDashboard = function(dashboardData, callback)
 	{
 		freeboardUI.showLoadingIndicator(true);
+
 		self.deserialize(dashboardData, function()
 		{
 			freeboardUI.showLoadingIndicator(false);
@@ -496,8 +497,8 @@ function FreeboardModel(datasourcePlugins, widgetPlugins, freeboardUI)
 			{
 				callback();
 			}
-
-        freeboard.emit("dashboard_loaded");
+			location.hash = self.name();
+      freeboard.emit("dashboard_loaded");
 		});
 	}
 
@@ -726,6 +727,10 @@ function FreeboardModel(datasourcePlugins, widgetPlugins, freeboardUI)
 			var obj = data.val();
 			obj._key = data.key;
 			self.sharedServerBoards.push(obj);
+
+			if (location.hash.slice(1) === obj.name){
+				self.loadDashboard(obj);
+			}
 		});
 		sharedBoardsRef.on('child_changed', function(data) {
 			self.sharedServerBoards.remove(function (item) {
