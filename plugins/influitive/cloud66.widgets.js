@@ -21,12 +21,17 @@
     freeboard.addStyle('.tw-th',
 		'display:table-row; font-size: 1rem; color: #B88F51;');
 
+    freeboard.addStyle('.row-alt:nth-child(odd)', 'background-color:rgba(0, 0, 0, 0.5);');
+    freeboard.addStyle('.row-alt > .tw-td', 'vertical-align: middle;');
     var cloud66Widget = function (settings) {
 
         var self = this;
 
         var currentSettings = settings;
+        var titleElement = $('<div class="tw-th"></div>')
+            .append('CLOUD66 STATUS');
 		var displayElement = $('<div class="tw-display"></div>')
+            .append(titleElement)
             .append($('<div class="tw-th"></div>')
                 .append('<div class="tw-td">Name</div>')
                 .append('<div class="tw-td">Status</div>')
@@ -34,11 +39,12 @@
                 .append('<div class="tw-td">Git Branch</div>')
                 .append('<div class="tw-td">Updated At</div>')
             );
+
+
         var projects = [];
 
         this.render = function (element) {
 			$(element).empty();
-
             $(element).append(displayElement);
         }
 
@@ -46,10 +52,13 @@
             projects = newSettings.projects ? newSettings.projects.split(',').map(function(p){
                 return p.toUpperCase();
             }) : [];
+            $(displayElement).find('.tw-tr').remove();
         }
 
         this.getHeight = function() {
-            return 5;
+            if (projects && projects.length > 4) {
+                return projects.length - 2;            }
+            return 2;
         }
 
         this.filterStacks = function(stack) {
@@ -61,7 +70,7 @@
                 $(newValue.filter(self.filterStacks)).each(function (index, stack) {
                     var id = stack.uid;
 
-                    var rowElement = $('<div class="tw-tr" id="'+id+'"></div>')
+                    var rowElement = $('<div class="tw-tr row-alt" id="'+id+'"></div>')
                         .append($('<div class="tw-td"></div>')
                             .append(self.buildNameElement(stack)))
                         .append($('<div class="tw-td"></div>')
