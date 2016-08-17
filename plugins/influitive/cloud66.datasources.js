@@ -4,7 +4,7 @@
 		var updateTimer = null;
 		var currentSettings = settings;
 		// Update every 15 seconds
-		var refreshFrequency = 15 * 1000;
+		var refreshFrequency = 150000 * 1000;
 		var apiUrl = 'https://app.cloud66.com/api/3/stacks.json';
 
 		function updateRefresh(refreshTime) {
